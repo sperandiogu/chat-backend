@@ -8,7 +8,11 @@ const PORT = process.env.PORT || 8080;
 const GEMINI_API_KEY = 'AIzaSyAH4CcTxGeVK62ilMkspN9Neqr4-tkgv0w';
 
 app.use(bodyParser.json());
-app.use(cors());
+app.use(cors({
+  origin: '*', // Ajuste isso conforme necessário para seu ambiente de produção
+  methods: 'GET,POST',
+  allowedHeaders: 'Content-Type,Authorization'
+}));
 
 let messages = [];
 
@@ -22,6 +26,7 @@ app.post('/api/messages', async (req, res) => {
   res.status(201).json(message);
 
   try {
+    console.log('Enviando mensagem para a API do Gemini:', message.text);
     const geminiResponse = await axios.post('https://api.gemini.com/v1/chat', {
       prompt: message.text
     }, {
@@ -30,12 +35,13 @@ app.post('/api/messages', async (req, res) => {
       }
     });
 
+    console.log('Resposta da API do Gemini:', geminiResponse.data);
     const botMessage = { sender: 'bot', text: geminiResponse.data.reply };
     messages.push(botMessage);
     res.status(201).json(botMessage);
   } catch (error) {
-    console.error('Error calling Gemini API:', error);
-    res.status(500).json({ error: 'Error calling Gemini API' });
+    console.error('Erro ao chamar a API do Gemini:', error.message);
+    res.status(500).json({ error: 'Erro ao chamar a API do Gemini' });
   }
 });
 
